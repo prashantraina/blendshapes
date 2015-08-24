@@ -4,7 +4,7 @@
 #include "stdafx.h"
 
 
-int main()
+int wmain()
 {
     return 0;
 }
