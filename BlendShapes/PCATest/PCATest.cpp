@@ -62,7 +62,7 @@ int wmain(int argc, wchar_t *argv[])
 
 	std::cout << eig.eigenvalues() << "\n\n";
 
-	std::vector<Eigen::VectorXd> transformedBasis;
+	std::vector<double> transformedBasisArr;
 
 	for (int i = 9; i >= 0; i--)
 	{
@@ -80,21 +80,29 @@ int wmain(int argc, wchar_t *argv[])
 		}
 
 		fileOut << connectivities[0] << "\n";
-
-		transformedBasis.push_back(transformed);
+		transformedBasisArr.insert(transformedBasisArr.end(), transformed.data(), transformed.data() + transformed.size());
 	}
+
+	Eigen::Map<Eigen::MatrixXd> transformedBasis{ transformedBasisArr.data(), (int)coords.size() / 10, 10 };
+
+	Eigen::JacobiSVD<Eigen::MatrixXd> basisSVD{ transformedBasis, Eigen::ComputeFullU | Eigen::ComputeFullV };
+
+	//Eigen::MatrixXd basisPinv = basisSVD.matrixV() * basisSVD.
+
+	Eigen::MatrixXd horseHorseSpace = transformedBasis.inverse() * horseMatrix;
+
+	std::cout << "Horses in horse space: \n\n " << horseHorseSpace.transpose() << "\n\n";
 
 	Eigen::VectorXd customWeights{ 10 };
 	customWeights <<0.40, 0.0, 0.0, 0.0, 0.6, 0.0, 0.0, 0.0, 0.0, 0.0;
+
+	//customWeights << 32.0801, -2.05527, 0.826853, 56.8507, -33.7251, 84.1283, -92.3943, 60.4999, -523.026, 9487.12;
 
 	const std::wstring customPath = horsePath + L"custom.obj";
 
 	Eigen::VectorXd customMesh = Eigen::VectorXd::Zero(horseMatrix.innerSize());
 
-	for (int i = 0; i < 9; i++)
-	{
-		customMesh += customWeights(i) * transformedBasis[i];
-	}
+	customMesh = transformedBasis * customWeights;
 
 	{
 		std::ofstream fileOut(customPath);
