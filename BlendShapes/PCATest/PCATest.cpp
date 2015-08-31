@@ -54,7 +54,10 @@ int wmain(int argc, wchar_t *argv[])
 
 	Eigen::Map<Eigen::MatrixXd> horseMatrix{ coords.data(), (int)coords.size() / 10, 10 };
 
-	Eigen::MatrixXd centered = horseMatrix.rowwise() - horseMatrix.colwise().mean();
+	Eigen::MatrixXd var = horseMatrix.colwise().mean(); 
+	Eigen::MatrixXd originalMeanHorse = horseMatrix.rowwise().mean();
+
+	Eigen::MatrixXd centered = horseMatrix.colwise() - originalMeanHorse;
 	Eigen::MatrixXd cov = centered.adjoint() * centered;
 
 
@@ -68,7 +71,7 @@ int wmain(int argc, wchar_t *argv[])
 	{
 		Eigen::VectorXd eigenvector = eig.eigenvectors().col(i);
 
-		Eigen::VectorXd transformed = horseMatrix * eigenvector;
+		Eigen::VectorXd transformed = originalMeanHorse + (centered * eigenvector);
 
 		std::ofstream fileOut(::getHorseEigenFilePath(10-i));
 
@@ -85,13 +88,13 @@ int wmain(int argc, wchar_t *argv[])
 
 	Eigen::Map<Eigen::MatrixXd> transformedBasis{ transformedBasisArr.data(), (int)coords.size() / 10, 10 };
 
-	Eigen::JacobiSVD<Eigen::MatrixXd> basisSVD{ transformedBasis, Eigen::ComputeFullU | Eigen::ComputeFullV };
+	//Eigen::JacobiSVD<Eigen::MatrixXd> basisSVD{ transformedBasis, Eigen::ComputeFullU | Eigen::ComputeFullV };
 
 	//Eigen::MatrixXd basisPinv = basisSVD.matrixV() * basisSVD.
 
-	Eigen::MatrixXd horseHorseSpace = transformedBasis.inverse() * horseMatrix;
+	//Eigen::MatrixXd horseHorseSpace = transformedBasis.inverse() * horseMatrix;
 
-	std::cout << "Horses in horse space: \n\n " << horseHorseSpace.transpose() << "\n\n";
+	//std::cout << "Horses in horse space: \n\n " << horseHorseSpace.transpose() << "\n\n";
 
 	Eigen::VectorXd customWeights{ 10 };
 	customWeights <<0.40, 0.0, 0.0, 0.0, 0.6, 0.0, 0.0, 0.0, 0.0, 0.0;
